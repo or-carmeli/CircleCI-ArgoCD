@@ -1,0 +1,24 @@
+replicaCount: 1
+
+image:
+  repository: orcarmeli/docker-image
+  pullPolicy: IfNotPresent
+  tag: "1.0.1"
+
+service:
+  type: LoadBalancer
+  port: 80
+
+ingress:
+  enabled: true
+  annotations: {}
+  hosts:
+    - host: devopsassignment.space
+      paths:
+      - path: "/"
+        pathType: Prefix
+    - host: www.devopsassignment.space
+      paths:
+      - path: "/"
+        pathType: Prefix
+

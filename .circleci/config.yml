@@ -1,0 +1,73 @@
+version: 2.1
+
+jobs:
+  deploy:
+    docker:
+      - image: cimg/python:3.8
+    steps:
+      - checkout  # Checks out the source code
+
+      # Install kubectl
+      - run:
+          name: Install kubectl
+          command: |
+            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+            sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+      # Install Helm
+      - run:
+          name: Install Helm
+          command: |
+            curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+            chmod 700 get_helm.sh
+            ./get_helm.sh
+
+      # Install AWS CLI
+      - run:
+          name: Install AWS CLI
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y curl unzip
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+
+      # Verify AWS CLI Installation
+      - run:
+          name: Verify AWS CLI Installation
+          command: aws --version
+
+      # Configure AWS
+      - run:
+          name: Configure AWS
+          command: |
+            echo 'export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY}' >> $BASH_ENV
+            echo 'export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY}' >> $BASH_ENV
+            echo 'export AWS_REGION="us-east-1"' >> $BASH_ENV
+            source $BASH_ENV
+
+      # Update kubeconfig
+      - run:
+          name: Update kubeconfig
+          command: |
+            aws eks update-kubeconfig --region ${AWS_REGION} --name my-cluster
+
+      - run:
+          name: List directory contents
+          command: |
+            ls -al
+            pwd
+
+      # Deploy using Helm
+      - run:
+          name: Deploy with Helm
+          command: |
+            helm upgrade -i myapp-release ./myweatherapp/
+            
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - deploy
+
