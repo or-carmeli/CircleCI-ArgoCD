@@ -1,4 +1,4 @@
-# CircleCI-ArgoCD
+# CircleCI-HelmChart Project
 
 
 ## Project Workflow 📊
