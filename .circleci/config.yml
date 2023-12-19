@@ -56,27 +56,32 @@ jobs:
             echo 'export AWS_REGION="us-east-1"' >> $BASH_ENV
             source $BASH_ENV
 
-      # Build Docker Image
       - run:
-          name: Build Docker Image
-          command: docker build -t myapp/weather_app:${CIRCLE_BUILD_NUM} .
-
-      # Test
-      - run:
-          name: Test Application
+          name: Install Docker Compose
           command: |
-             docker run -d -p 5000:5000 --name weather_app myapp/weather_app:${CIRCLE_BUILD_NUM}
-             echo "Waiting for the application to start..."
-             for i in {1..30}; do # Wait for up to 30 seconds
-               if curl -s http://127.0.0.1:5000; then
-                 echo "Application started successfully."
-                 break
-               fi
-               sleep 1
-             done
-             echo "Container logs:"
-             docker logs weather_app
-             pytest test_app.py
+            apk add --no-cache docker-compose
+      - run:
+          name: Build Services
+          command: |
+            docker-compose build
+
+      - run:
+          name: Start Services
+          command: |
+            docker-compose up
+      - run:
+          name: Execute Tests
+          command: |
+            docker-compose run test
+      - run:
+          name: View Logs if Tests Fail
+          command: |
+            docker-compose logs app
+          when: on_fail
+      - run:
+          name: Cleanup
+          command: |
+            docker-compose down
 
       # Push Image to Docker Hub
       - run:
