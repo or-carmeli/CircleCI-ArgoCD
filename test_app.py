@@ -13,7 +13,7 @@ def is_website_reachable(url):
 class TestWebsiteReachable(unittest.TestCase):
 
     def test_website_reachable(self):
-        url = "http://127.0.0.1:5000"
+        url = "http://app:5000"
         for _ in range(30):
             if is_website_reachable(url):
                 return
