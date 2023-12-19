@@ -5,19 +5,14 @@ FROM python:3.9-slim
 WORKDIR /app
 
 # Upgrade pip
-RUN /usr/local/bin/python -m pip install --upgrade pip
-
-# Add requirements.txt file to the container
-COPY requirements.txt ./
+RUN pip install --upgrade pip
 
 # Install any needed packages specified in requirements.txt
-RUN pip install --trusted-host pypi.python.org -r requirements.txt
+COPY requirements.txt .
+RUN pip install -r requirements.txt
 
 # Add the current directory contents into the container at /app
-COPY . ./
-
-# Run tests
-# RUN python -m unittest discover -v
+COPY . .
 
 # Expose port
 EXPOSE 5000
@@ -27,5 +22,4 @@ ENV FLASK_APP=app.py
 ENV FLASK_RUN_HOST=0.0.0.0
 
 # Run the application
-CMD ["flask", "run"]
-
+CMD ["python3", "app.py"]
