@@ -59,7 +59,9 @@ jobs:
       - run:
           name: Install Docker Compose
           command: |
-            apk add --no-cache docker-compose
+            sudo apt-get update
+            sudo apt-get install -y docker-compose
+
       - run:
           name: Build Services
           command: |
