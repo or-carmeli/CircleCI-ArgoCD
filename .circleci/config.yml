@@ -11,21 +11,22 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
 
-      # Install Python and Pytest
+      # Install Python packages
       - run:
           name: Install Python and Pytest
           command: |
             pip3 install --user --upgrade pip
             pip3 install --user pytest requests
 
-      # Install kubectl
+      # Install kubectl (ensure the installation can be done without root privileges)
       - run:
           name: Install kubectl
           command: |
             curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-            install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+            chmod +x kubectl
+            mv kubectl /home/circleci/.local/bin/
 
-      # Install Helm
+      # Install Helm (similarly ensure no root privileges needed)
       - run:
           name: Install Helm
           command: |
@@ -33,15 +34,13 @@ jobs:
             chmod 700 get_helm.sh
             ./get_helm.sh
 
-      # Install AWS CLI
+      # Install AWS CLI (without requiring root privileges)
       - run:
           name: Install AWS CLI
           command: |
-            apt-get update
-            apt-get install -y curl unzip
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
             unzip awscliv2.zip
-            ./aws/install
+            ./aws/install --update
 
       # Verify AWS CLI Installation
       - run:
@@ -112,6 +111,7 @@ jobs:
               helm install myapp-release ./myweatherapp/ --set image.tag=${CIRCLE_BUILD_NUM}
             fi
             set -e # Revert back to exit on error
+
 workflows:
   version: 2
   build-and-deploy:
