@@ -3,7 +3,8 @@ version: 2.1
 jobs:
   build-and-deploy:
     docker:
-      - image: python:3.8  # Example Python image
+      - image: cimg/go:1.17
+    resource_class: xLarge
     steps:
       - checkout
 
