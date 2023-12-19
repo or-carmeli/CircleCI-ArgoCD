@@ -13,9 +13,12 @@ def is_website_reachable(url):
 class TestWebsiteReachable(unittest.TestCase):
 
     def test_website_reachable(self):
-        time.sleep(5)
-        url = "http://localhost:5000"  # Use the container name as the domain.
-        self.assertTrue(is_website_reachable(url))
+        url = "http://localhost:5000"
+        for _ in range(30):
+            if is_website_reachable(url):
+                return
+            time.sleep(1)
+        self.fail(f"Website not reachable at {url}")
 
 if __name__ == "__main__":
     unittest.main()

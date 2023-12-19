@@ -74,6 +74,8 @@ jobs:
                fi
                sleep 1
              done
+             echo "Container logs:"
+             docker logs weather_app
              pytest test_app.py
 
       # Push Image to Docker Hub
