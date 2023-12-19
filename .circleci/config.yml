@@ -56,48 +56,56 @@ jobs:
             echo 'export AWS_REGION="us-east-1"' >> $BASH_ENV
             source $BASH_ENV
 
-      - run:
-          name: Install Docker Compose
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y docker-compose
-      - run:
-          name: List directory contents
-          command: |
-            ls -al
-            pwd
 
+      # Generate Timestamp
       - run:
-          name: Build Services
-          command: |
-            docker-compose build
+          name: Generate Timestamp
+          command: echo 'export TIMESTAMP=$(date +%Y%m%d%H%M%S)' >> $BASH_ENV
 
+      # Step 1: Build the Docker image with timestamp tag
       - run:
-          name: Start Services
-          command: |
-            docker-compose up
+          name: Build Docker Image
+          command: docker build -t myapp/weather_app:$TIMESTAMP .
+
+
+      # Step 2: Run the Flask app in a container
       - run:
-          name: Execute Tests
-          command: |
-            docker-compose run test
+          name: Run Flask App
+          command: docker run -d -p 5000:5000 --name flask-app myapp/weather_app:$TIMESTAMP
+
+      # Step 3: Wait for the Flask app to be ready
       - run:
-          name: View Logs if Tests Fail
+          name: Wait for Flask App
           command: |
-            docker-compose logs app
-          when: on_fail
+            for i in {1..30}; do
+              if curl --fail http://localhost:5000; then
+                echo "Flask app is up and running"
+                break
+              fi
+              echo "Waiting for Flask app to start..."
+              sleep 1
+            done
+
+      # Step 4: Execute tests
+      - run:
+          name: Run Tests
+          command: |
+            # Assuming tests are part of your repository and can be run locally
+            # Adjust this command based on how you run your tests
+            python -m unittest
+
+      # Step 5: Push the Docker image if tests succeed
+      - run:
+          name: Push Docker Image
+          command: |
+            echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
+            docker push myapp/weather_app:$TIMESTAMP
+          when: on_success
+
+      # Step 6: Cleanup
       - run:
           name: Cleanup
-          command: |
-            docker-compose down
-
-      # Push Image to Docker Hub
-      - run:
-          name: Login to Docker Hub
-          command: echo $DOCKERHUB_PASS | docker login -u $DOCKERHUB_USER --password-stdin
-
-      - run:
-          name: Push Image
-          command: docker push myapp/weather_app:${CIRCLE_BUILD_NUM}
+          command: docker stop flask-app
 
       # Update kubeconfig
       - run:
