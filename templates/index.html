@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Weather App</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: white;
+        text-align: center;
+      }
+
+      h1 {
+        color: #2c3e50;
+        font-size: 2.5rem;
+        margin-top: 50px;
+      }
+
+      form {
+        display: inline-block;
+        margin-top: 20px;
+      }
+
+      input {
+        font-size: 1.2rem;
+        padding: 10px;
+        border: 1px solid #bdc3c7;
+        border-radius: 5px;
+        outline: none;
+        width: 300px;
+        margin-right: 5px;
+      }
+
+      button {
+        font-size: 1.2rem;
+        padding: 10px 15px;
+        background-color: #3498db;
+        color: #ffffff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      button:hover {
+        background-color: #2980b9;
+      }
+
+      p {
+        color: #c0392b;
+        font-size: 1.2rem;
+      }
+
+      .form-group {
+        margin-top: 20px;
+      }
+
+      .error-message {
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Enter a city or country to get the 7-day weather forecast</h1>
+    <form method="post">
+      <div class="form-group">
+        <input type="text" name="location" placeholder="City or Country">
+        <button type="submit">Submit</button>
+      </div>
+      {% if error %}
+        <div class="error-message">
+          <p>{{ error }}</p>
+        </div>
+      {% endif %}
+    </form>
+  </body>
+</html>
