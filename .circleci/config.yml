@@ -65,13 +65,13 @@ jobs:
       # Step 1: Build the Docker image with timestamp tag
       - run:
           name: Build Docker Image
-          command: docker build -t myapp/weather_app:$TIMESTAMP .
+          command: docker build -t orcarmeli/weather_app:$TIMESTAMP .
 
 
       # Step 2: Run the Flask app in a container
       - run:
           name: Run Flask App
-          command: docker run -d -p 5000:5000 --name flask-app myapp/weather_app:$TIMESTAMP
+          command: docker run -d -p 5000:5000 --name flask-app orcarmeli/weather_app:$TIMESTAMP
 
       # Step 3: Wait for the Flask app to be ready
       - run:
@@ -99,7 +99,7 @@ jobs:
           name: Push Docker Image
           command: |
             echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
-            docker push myapp/weather_app:$TIMESTAMP
+            docker push orcarmeli/weather_app:$TIMESTAMP
           when: on_success
 
       # Step 6: Cleanup
