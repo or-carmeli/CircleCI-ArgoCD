@@ -14,7 +14,7 @@ class TestWebsiteReachable(unittest.TestCase):
 
     def test_website_reachable(self):
         time.sleep(5)
-        url = "http://flask_container:5000"  # Use the container name as the domain.
+        url = "http://localhost:5000"  # Use the container name as the domain.
         self.assertTrue(is_website_reachable(url))
 
 if __name__ == "__main__":
