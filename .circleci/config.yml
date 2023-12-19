@@ -2,12 +2,12 @@ version: 2.1
 
 jobs:
   build-and-deploy:
-    machine:
-      image: ubuntu-2004:202101-01  # Use a machine executor
+    docker:
+      - image: python:3.8  # Example Python image
     steps:
       - checkout
 
-      # Docker setup
+      # Set up Docker environment
       - setup_remote_docker:
           docker_layer_caching: true
 
