@@ -1,11 +1,24 @@
 version: 2.1
 
 jobs:
-  deploy:
-    docker:
-      - image: cimg/python:3.8
+  build-and-deploy:
+    machine:
+      image: ubuntu-2004:202101-01  # Use a machine executor
     steps:
-      - checkout  # Checks out the source code
+      - checkout
+
+      # Docker setup
+      - setup_remote_docker:
+          docker_layer_caching: true
+
+      # Install Python and Pytest
+      - run:
+          name: Install Python and Pytest
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y python3-pip
+            pip3 install --upgrade pip
+            pip3 install pytest requests
 
       # Install kubectl
       - run:
@@ -46,6 +59,35 @@ jobs:
             echo 'export AWS_REGION="us-east-1"' >> $BASH_ENV
             source $BASH_ENV
 
+      # Build Docker Image
+      - run:
+          name: Build Docker Image
+          command: docker build -t myapp/weather_app:${CIRCLE_BUILD_NUM} .
+
+      # Test
+      - run:
+          name: Test Application
+          command: |
+             docker run -d -p 5000:5000 --name weather_app myapp/weather_app:${CIRCLE_BUILD_NUM}
+             echo "Waiting for the application to start..."
+             for i in {1..30}; do # Wait for up to 30 seconds
+               if curl -s http://localhost:5000; then
+                 echo "Application started successfully."
+                 break
+               fi
+               sleep 1
+             done
+             pytest test_app.py
+
+      # Push Image to Docker Hub
+      - run:
+          name: Login to Docker Hub
+          command: echo $DOCKERHUB_PASS | docker login -u $DOCKERHUB_USER --password-stdin
+
+      - run:
+          name: Push Image
+          command: docker push myapp/weather_app:${CIRCLE_BUILD_NUM}
+
       # Update kubeconfig
       - run:
           name: Update kubeconfig
@@ -62,9 +104,16 @@ jobs:
       - run:
           name: Deploy with Helm
           command: |
-            helm upgrade -i myapp-release ./myweatherapp/
-            
-
+            set +e # Allow the next command to fail without exiting the script
+            helm list -q | grep -q "^myapp-release$"
+            if [ $? -eq 0 ]; then
+              echo "Release exists, upgrading..."
+              helm upgrade myapp-release ./myweatherapp/ --set image.tag=${CIRCLE_BUILD_NUM}
+            else
+              echo "Release does not exist, installing..."
+              helm install myapp-release ./myweatherapp/ --set image.tag=${CIRCLE_BUILD_NUM}
+            fi
+            set -e # Revert back to exit on error
 workflows:
   version: 2
   build-and-deploy:
