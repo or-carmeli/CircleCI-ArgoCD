@@ -71,7 +71,7 @@ jobs:
       # Step 2: Run the Flask app in a container
       - run:
           name: Run Flask App
-          command: docker run -d -p 5000:5000 --name flask-app orcarmeli/weather_app:$TIMESTAMP
+          command: docker run -d -p 5000:5000 --name flask-app docker.io/orcarmeli/weather_app:$TIMESTAMP
 
       # Step 3: Wait for the Flask app to be ready
       - run:
