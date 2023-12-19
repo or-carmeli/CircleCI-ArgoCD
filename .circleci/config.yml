@@ -68,7 +68,7 @@ jobs:
              docker run -d -p 5000:5000 --name weather_app myapp/weather_app:${CIRCLE_BUILD_NUM}
              echo "Waiting for the application to start..."
              for i in {1..30}; do # Wait for up to 30 seconds
-               if curl -s http://localhost:5000; then
+               if curl -s http://127.0.0.1:5000; then
                  echo "Application started successfully."
                  break
                fi
