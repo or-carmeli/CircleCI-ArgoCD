@@ -57,21 +57,17 @@ jobs:
             source $BASH_ENV
 
 
-      # Generate Timestamp
-      - run:
-          name: Generate Timestamp
-          command: echo 'export TIMESTAMP=$(date +%Y%m%d%H%M%S)' >> $BASH_ENV
-
-      # Step 1: Build the Docker image with timestamp tag
+      # Step 1: Build the Docker image with CIRCLE_BUILD_NUM tag
       - run:
           name: Build Docker Image
-          command: docker build -t orcarmeli/weather_app:$TIMESTAMP .
+          command: docker build -t orcarmeli/myweatherapp:${CIRCLE_BUILD_NUM} .
 
 
       # Step 2: Run the Flask app in a container
       - run:
           name: Run Flask App
-          command: docker run -d -p 5000:5000 --name flask-app docker.io/orcarmeli/weather_app:$TIMESTAMP
+          command: docker run -d -p 5000:5000 --name flask-app orcarmeli/myweatherapp:${CIRCLE_BUILD_NUM}
+
 
       # Step 3: Wait for the Flask app to be ready
       - run:
@@ -99,7 +95,7 @@ jobs:
           name: Push Docker Image
           command: |
             echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
-            docker push orcarmeli/weather_app:$TIMESTAMP
+            docker push orcarmeli/myweatherapp:${CIRCLE_BUILD_NUM}
           when: on_success
 
       # Step 6: Cleanup
