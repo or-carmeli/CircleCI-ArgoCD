@@ -88,7 +88,7 @@ jobs:
           command: |
             # Assuming tests are part of your repository and can be run locally
             # Adjust this command based on how you run your tests
-            python -m unittest
+            python3 -m unittest
 
       # Step 5: Push the Docker image if tests succeed
       - run:
