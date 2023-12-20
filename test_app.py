@@ -3,7 +3,7 @@ import requests
 
 class TestWebsiteReachable(unittest.TestCase):
     def test_website_reachable(self):
-        url = "http://localhost:5000"
+        url = "http://flask-app:5000"
         response = requests.get(url)
         self.assertEqual(response.status_code, 200, f"Website not reachable at {url}")
 

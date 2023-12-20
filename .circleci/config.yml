@@ -66,15 +66,16 @@ jobs:
       # Step 2: Run the Flask app in a container
       - run:
           name: Run Flask App
-          command: docker run -d -p 5000:5000 --name flask-app orcarmeli/myweatherapp:${CIRCLE_BUILD_NUM}
-
+          command: |
+            docker run -d -p 5000:5000 --name flask-app orcarmeli/myweatherapp:${CIRCLE_BUILD_NUM}
+            sudo lsof | grep 5000 
 
       # Step 3: Wait for the Flask app to be ready
       - run:
           name: Wait for Flask App
           command: |
             for i in {1..30}; do
-              if curl --fail http://localhost:5000; then
+              if curl --fail http://flask-app:5000; then
                 echo "Flask app is up and running"
                 break
               fi
