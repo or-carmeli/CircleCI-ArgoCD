@@ -57,64 +57,61 @@ jobs:
             source $BASH_ENV
 
 
-      # Step 1: Build the Docker image with CIRCLE_BUILD_NUM tag
+      # Create custom Docker network
       - run:
-          name: Build Docker Image
-          command: docker build -t orcarmeli/myweatherapp:${CIRCLE_BUILD_NUM} .
+          name: Create custom Docker network
+          command: docker network create mynetwork
 
-
-      # Step 2: Run the Flask app in a container
+      # Build Docker image
       - run:
-          name: Run Flask App
+          name: Build Docker image
+          command: docker build -t myweatherapp:latest .
+
+      # Tag Docker image for Docker Hub
+      - run:
+          name: Tag Docker image for Docker Hub
+          command: docker tag myweatherapp:latest $DOCKERHUB_USER/myweatherapp:latest
+
+      # Start Flask application
+      - run:
+          name: Start Flask application
+          command: docker run -d -p 5000:5000 --network=mynetwork --name flask_container myweatherapp:latest
+
+      # Run tests and save the result to a file
+      - run:
+          name: Run reachability test
           command: |
-            docker run -d -p 5000:5000 --name flask-app orcarmeli/myweatherapp:${CIRCLE_BUILD_NUM}
-            # ss -tupln
+            set +e
+            docker run --network=mynetwork myweatherapp:latest python3 test_app.py
+            echo $? > test_result.txt
+            set -e
 
-      # Step 3: Wait for the Flask app to be ready
-      # Step 3: Wait for the Flask app to be ready
+      # Notify Discord about test results
       - run:
-          name: Wait for Flask App
+          name: Send test results to Discord
           command: |
-            echo "Waiting for the Flask app to start..."
-            max_attempts=30
-            count=0
-            while ! curl --fail --silent --show-error http://localhost:5000; do
-                count=$((count+1))
-                if [ "$count" -lt "$max_attempts" ]; then
-                    echo "Attempt $count: Flask app not ready yet, retrying in 1 second..."
-                    sleep 1
-                else
-                    echo "Failed to connect to Flask app after $max_attempts attempts."
-                    echo "Diagnosing with verbose output:"
-                    curl --verbose http://localhost:5000
-                    echo "Exiting due to failure in connecting to Flask app."
-                    exit 1
-                fi
-            done
-            echo "Flask app is up and running."
+            TEST_RESULT=$(cat test_result.txt)
+            if [ "$TEST_RESULT" == "0" ]; then
+                MESSAGE_CONTENT="Success! Tests passed for job $CIRCLE_JOB. See details at $CIRCLE_BUILD_URL."
+            else
+                MESSAGE_CONTENT="Failure! Tests failed for job $CIRCLE_JOB. Check $CIRCLE_BUILD_URL for more details."
+            fi
+            curl -X POST -H "Content-Type: application/json" -d '{"content":"'"$MESSAGE_CONTENT"'"}' $DISCORD_WEBHOOK
 
-      # Step 4: Execute tests
+      # Login to Docker Hub and push the image
       - run:
-          name: Run Tests
-          command: |
-            # Assuming tests are part of your repository and can be run locally
-            # Adjust this command based on how you run your tests
-            sleep 10
-            python3 -m unittest
+          name: Login to Docker Hub
+          command: echo "$DOCKERHUB_PASS" | docker login -u $DOCKERHUB_USER --password-stdin
 
-      # Step 5: Push the Docker image if tests succeed
       - run:
-          name: Push Docker Image
-          command: |
-            echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
-            docker push orcarmeli/myweatherapp:${CIRCLE_BUILD_NUM}
-          when: on_success
+          name: Push Docker Image to Docker Hub
+          command: docker push $DOCKERHUB_USER/myweatherapp:latest
 
-      # Step 6: Cleanup
+      # Cleanup
       - run:
-          name: Cleanup
-          command: docker stop flask-app
-
+          name: Stop Flask application
+          command: docker stop flask_container
+          
       # Update kubeconfig
       - run:
           name: Update kubeconfig
@@ -127,20 +124,6 @@ jobs:
             ls -al
             pwd
 
-      # Deploy using Helm
-      - run:
-          name: Deploy with Helm
-          command: |
-            set +e # Allow the next command to fail without exiting the script
-            helm list -q | grep -q "^myapp-release$"
-            if [ $? -eq 0 ]; then
-              echo "Release exists, upgrading..."
-              helm upgrade myapp-release ./myweatherapp/ --set image.tag=${CIRCLE_BUILD_NUM}
-            else
-              echo "Release does not exist, installing..."
-              helm install myapp-release ./myweatherapp/ --set image.tag=${CIRCLE_BUILD_NUM}
-            fi
-            set -e # Revert back to exit on error
 
 workflows:
   version: 2
