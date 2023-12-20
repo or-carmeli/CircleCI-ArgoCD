@@ -74,14 +74,20 @@ jobs:
       - run:
           name: Wait for Flask App
           command: |
-            for i in {1..30}; do
-              if curl --fail --verbose http://localhost:5000; then
-                echo "Flask app is up and running"
-                break
+            echo "Waiting for the Flask app to start..."
+            max_attempts=30
+            count=0
+            while ! curl --fail http://localhost:5000; do
+              count=$((count+1))
+              if [ "$count" -lt "$max_attempts" ]; then
+                echo "Flask app not ready yet, retrying in 1 second... (Attempt: $count)"
+                sleep 1
+              else
+                echo "Failed to connect to Flask app after $max_attempts attempts, exiting."
+                exit 1
               fi
-              echo "Waiting for Flask app to start..."
-              sleep 1
             done
+            echo "Flask app is up and running."
 
       # Step 4: Execute tests
       - run:
