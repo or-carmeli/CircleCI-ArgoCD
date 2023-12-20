@@ -71,7 +71,6 @@ jobs:
             # ss -tupln
 
       # Step 3: Wait for the Flask app to be ready
-      # Step 3: Wait for the Flask app to be ready
       - run:
           name: Wait for Flask App
           command: |
@@ -147,3 +146,4 @@ workflows:
   build-and-deploy:
     jobs:
       - build-and-deploy
+
