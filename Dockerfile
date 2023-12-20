@@ -11,7 +11,7 @@ RUN /usr/local/bin/python -m pip install --upgrade pip
 COPY requirements.txt ./
 
 # Install any needed packages specified in requirements.txt
-# RUN pip install --trusted-host pypi.python.org -r requirements.txt
+RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
 # Add the current directory contents into the container at /app
 COPY . ./
