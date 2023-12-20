@@ -81,11 +81,15 @@ jobs:
       - run:
           name: Run reachability test
           command: |
-            set +e
             docker run --network=mynetwork myweatherapp:latest python3 test_app.py
-            echo $? > test_result.txt
-            set -e
-
+            TEST_EXIT_STATUS=$?
+            if [ "$TEST_EXIT_STATUS" -eq 0 ]; then
+                echo "Tests passed successfully."
+            else
+                echo "Tests failed with exit status: $TEST_EXIT_STATUS"
+                exit $TEST_EXIT_STATUS
+            fi
+      
       # Notify Discord about test results
       - run:
           name: Send test results to Discord
