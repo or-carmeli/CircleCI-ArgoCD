@@ -16,11 +16,11 @@ jobs:
           name: Install Python and Pytest
           command: |
             sudo apt-get update
-            sudo apt-get install python3-pip
+            sudo apt-get install -y python3-pip
             pip3 install --user --upgrade pip
             pip3 install --user pytest requests
 
-      # Install kubectl (ensure the installation can be done without root privileges)
+      # Install kubectl
       - run:
           name: Install kubectl
           command: |
@@ -28,7 +28,7 @@ jobs:
             chmod +x kubectl
             sudo mv kubectl /usr/local/bin/
 
-      # Install Helm (similarly ensure no root privileges needed)
+      # Install Helm
       - run:
           name: Install Helm
           command: |
@@ -36,7 +36,7 @@ jobs:
             chmod 700 get_helm.sh
             ./get_helm.sh
 
-      # Install AWS CLI (without requiring root privileges)
+      # Install AWS CLI
       - run:
           name: Install AWS CLI
           command: |
@@ -55,7 +55,6 @@ jobs:
             echo 'export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY}' >> $BASH_ENV
             echo 'export AWS_REGION="us-east-1"' >> $BASH_ENV
             source $BASH_ENV
-
 
       # Create custom Docker network
       - run:
@@ -81,16 +80,15 @@ jobs:
       - run:
           name: Run reachability test and save result
           command: |
+            set +e
             docker run --network=mynetwork myweatherapp:latest python3 test_app.py
             TEST_EXIT_STATUS=$?
-            echo $? > test_result.txt
-            if [ "$TEST_EXIT_STATUS" -eq 0 ]; then
-                echo "Tests passed successfully."
-            else
-                echo "Tests failed with exit status: $TEST_EXIT_STATUS"
+            echo $TEST_EXIT_STATUS > test_result.txt
+            set -e
+            if [ "$TEST_EXIT_STATUS" -ne 0 ]; then
                 exit $TEST_EXIT_STATUS
             fi
-      
+
       # Notify Discord about test results
       - run:
           name: Send test results to Discord
@@ -101,8 +99,7 @@ jobs:
             else
                 MESSAGE_CONTENT="Failure! Tests failed for job $CIRCLE_JOB. Check $CIRCLE_BUILD_URL for more details."
             fi
-            
-      curl -X POST -H "Content-Type: application/json" -d '{"content":"'"$MESSAGE_CONTENT"'"}' $DISCORD_WEBHOOK
+            curl -X POST -H "Content-Type: application/json" -d '{"content":"'"$MESSAGE_CONTENT"'"}' $DISCORD_WEBHOOK
 
       # Login to Docker Hub and push the image
       - run:
@@ -117,7 +114,7 @@ jobs:
       - run:
           name: Stop Flask application
           command: docker stop flask_container
-          
+
       # Update kubeconfig
       - run:
           name: Update kubeconfig
@@ -126,13 +123,25 @@ jobs:
 
       - run:
           name: List directory contents
+          command: ls -al
+
+      # Deploy using Helm
+      - run:
+          name: Deploy with Helm
           command: |
-            ls -al
-            pwd
+            #Make sure Kubernetes context is set correctly
+            aws eks update-kubeconfig --region ${AWS_REGION} --name my-cluster
 
-
+            # Helm upgrade or install
+            helm upgrade --install myapp-release ./path/to/your/helm/chart \
+              --namespace your-namespace \
+              --set image.repository=$DOCKERHUB_USER/myweatherapp \
+              --set image.tag=latest \
+              --wait
+        
 workflows:
   version: 2
   build-and-deploy:
     jobs:
       - build-and-deploy
+
