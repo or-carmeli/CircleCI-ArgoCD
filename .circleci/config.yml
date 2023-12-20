@@ -75,7 +75,7 @@ jobs:
           name: Wait for Flask App
           command: |
             for i in {1..30}; do
-              if curl --fail http://flask-app:5000; then
+              if curl --fail --verbose http://localhost:5000; then
                 echo "Flask app is up and running"
                 break
               fi
