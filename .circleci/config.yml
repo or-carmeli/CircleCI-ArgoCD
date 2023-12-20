@@ -68,7 +68,7 @@ jobs:
           name: Run Flask App
           command: |
             docker run -d -p 5000:5000 --name flask-app orcarmeli/myweatherapp:${CIRCLE_BUILD_NUM}
-            sudo lsof | grep 5000 
+            # ss -tupln
 
       # Step 3: Wait for the Flask app to be ready
       - run:
@@ -89,6 +89,7 @@ jobs:
           command: |
             # Assuming tests are part of your repository and can be run locally
             # Adjust this command based on how you run your tests
+            sleep 10
             python3 -m unittest
 
       # Step 5: Push the Docker image if tests succeed
