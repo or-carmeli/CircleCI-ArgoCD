@@ -79,10 +79,11 @@ jobs:
 
       # Run tests and save the result to a file
       - run:
-          name: Run reachability test
+          name: Run reachability test and save result
           command: |
             docker run --network=mynetwork myweatherapp:latest python3 test_app.py
             TEST_EXIT_STATUS=$?
+            echo $? > test_result.txt
             if [ "$TEST_EXIT_STATUS" -eq 0 ]; then
                 echo "Tests passed successfully."
             else
@@ -100,7 +101,8 @@ jobs:
             else
                 MESSAGE_CONTENT="Failure! Tests failed for job $CIRCLE_JOB. Check $CIRCLE_BUILD_URL for more details."
             fi
-            curl -X POST -H "Content-Type: application/json" -d '{"content":"'"$MESSAGE_CONTENT"'"}' $DISCORD_WEBHOOK
+            
+      curl -X POST -H "Content-Type: application/json" -d '{"content":"'"$MESSAGE_CONTENT"'"}' $DISCORD_WEBHOOK
 
       # Login to Docker Hub and push the image
       - run:
