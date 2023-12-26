@@ -2,4 +2,4 @@
 
 
 ## Project Workflow 📊
-![Project Workflow](https://i.ibb.co/2SVJgMF/Git-Python-DBroject-drawio-1.png)
+![Project Workflow](https://i.ibb.co/tD43KjK/Screenshot-from-2023-12-26-16-43-12.png)
